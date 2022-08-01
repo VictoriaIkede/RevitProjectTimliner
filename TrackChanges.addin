@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+<AddIn Type="Application">
+  <Name>TrackChanges</Name>
+  <Assembly>TrackChanges.dll</Assembly>
+  <AddInId>
+    870B1BC6-FDA7-4306-9A3C-62EF5858A050
+  </AddInId>
+  <FullClassName>TrackChanges.RecordCommandsEdited</FullClassName>
+  <VendorId>thebuildingcoder</VendorId>
+  <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+</AddIn>
+<!--</AddIn>
+  <AddIn Type="Command">
+    <Name>Recordascommand</Name>
+    <Assembly>TrackChanges.dll</Assembly>
+    <AddInId>
+      FB9FA97E-4CA7-4A00-95D3-A1E19FB9E33F
+    </AddInId>
+    <FullClassName>TrackChanges.Recordascommand</FullClassName>
+    <VendorId>thebuildingcoder</VendorId>
+    <VendorDescription>The Building Coder, http://thebuildingcoder.typepad.com</VendorDescription>
+  </AddIn>-->
+</RevitAddIns>
