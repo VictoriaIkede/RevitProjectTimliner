@@ -22,7 +22,10 @@ using System.Reflection;
     class RecordCommandsEdited : IExternalApplication
         {
             public static RecordCommandsEdited thisApp = null;
-            public Result OnShutdown(UIControlledApplication application)
+            public string filesDir { get; set; }
+            public string fileName { get; set; }
+            public string outputFile { get; set; }
+        public Result OnShutdown(UIControlledApplication application)
             {
                 application.ControlledApplication.DocumentChanged -= ChangeTracker;
                 return Result.Succeeded;
@@ -34,11 +37,15 @@ using System.Reflection;
             thisApp = this;
                 try
                 {
-                    application.ControlledApplication.DocumentChanged += new EventHandler
-                        <DocumentChangedEventArgs>(ChangeTracker);
-
-                    string tempFolder = "C:\\Users\\vican\\Documents\\Personal Files\\THESIS\\Databose Storage of Project Parameters";
-                    string outputFile = Path.Combine(tempFolder, "NewProject.csv");
+                    //TODO create app UI butons
+                    //button to open setings
+                    //button to open a form for inspecting recoreded changes
+                    application.ControlledApplication.DocumentChanged += new EventHandler<DocumentChangedEventArgs>(ChangeTracker);
+                
+                    filesDir = "C:\\Reports"; //TODO get selected directory from app config <-------------------------------------------------------------------
+                    fileName = "_FileName_Changes.csv";
+                    outputFile = Path.Combine(filesDir, fileName);
+                    //TODO when trackig a new doc first write the date of tracking. Is this even nesesery we can get the date of tracking from the earliest change
                     using (StreamWriter sw = new StreamWriter(outputFile, true))
                     {
                         DateTime now = DateTime.Now;
@@ -64,8 +71,7 @@ using System.Reflection;
             string user = doc.Application.Username;
             string filename = doc.PathName;
             string filenameShort = Path.GetFileNameWithoutExtension(filename);
-            string tempFolder = "C:\\Users\\vican\\Documents\\Personal Files\\THESIS\\Databose Storage of Project Parameters";
-            string outputFile = Path.Combine(tempFolder, "NewProject.csv");
+            outputFile = Path.Combine(filesDir, filenameShort+"_Changes.csv");
 
             Selection sel = uidoc.Selection;
             ICollection<ElementId> deleted = args.GetDeletedElementIds();
