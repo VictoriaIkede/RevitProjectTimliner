@@ -21,9 +21,7 @@ namespace TrackChanges
     {
         public Controllers.SetingsFormController Controller { get; set; }
 
-        public string reportsDir {get; set;}
-
-        public SettingsForm(RDB.Document doc, RUI.UIApplication uiapp)
+        public SettingsForm()
         {
             InitializeComponent();
             textBox1.Text = Properties.Settings1.Default.ExportLoaction;
@@ -33,12 +31,6 @@ namespace TrackChanges
         {
             Controller.ApplyChanges();
             this.Close();
-        }
-
-
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            Controller.tracking = checkBox1.Checked;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -53,6 +45,12 @@ namespace TrackChanges
         private void cancel_button_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+
+        private void openInspectChangesForm(object sender, EventArgs e)
+        {
+            Controller.OpenInspectChangesForm();
         }
     }
 }

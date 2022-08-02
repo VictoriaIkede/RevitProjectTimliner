@@ -25,7 +25,7 @@ namespace TrackChanges
             try
             {
                 Controllers.SetingsFormController controller = new Controllers.SetingsFormController(uiapp);
-                SettingsForm form = new SettingsForm(doc, uiapp);
+                SettingsForm form = new SettingsForm();
                 form.Controller = controller;
                 form.ShowDialog();
                 trans.Commit();

@@ -10,16 +10,21 @@ using RDB = Autodesk.Revit.DB;
 using RDBE = Autodesk.Revit.DB.Events;
 using RUI = Autodesk.Revit.UI;
 
+using System.IO;
+
 namespace TrackChanges.Controllers
 {
     internal class SetingsFormController
     {
+        public RUI.UIApplication _uiapp { get; set; }
+        public RDB.Document _doc { get; set; }
         public SetingsFormController(RUI.UIApplication uiapp)
         {
             _uiapp = uiapp;
+            RUI.UIDocument uidoc = uiapp.ActiveUIDocument;
+            _doc = uidoc.Document;
             tracking = Properties.Settings1.Default.TrackChanges;
         }
-        private RUI.UIApplication _uiapp {get; set;}
 
         public void ApplyChanges()
         {
@@ -29,9 +34,10 @@ namespace TrackChanges.Controllers
                 Properties.Settings1.Default.ExportLoaction = exportPath;
             }
         }
-        public void StartTracking()
+        public void OpenInspectChangesForm()
         {
-            
+            RecordCommandsEdited app = RecordCommandsEdited.thisApp;
+            app.seeCurrentChanges(_uiapp, _doc);
         }
 
         public bool tracking { get; set; }

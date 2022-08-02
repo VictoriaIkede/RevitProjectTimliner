@@ -37,13 +37,49 @@ namespace TrackChanges.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool TrackChanges {
             get {
                 return ((bool)(this["TrackChanges"]));
             }
             set {
                 this["TrackChanges"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int SessionID {
+            get {
+                return ((int)(this["SessionID"]));
+            }
+            set {
+                this["SessionID"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("_Changes")]
+        public string ChangesFileEnding {
+            get {
+                return ((string)(this["ChangesFileEnding"]));
+            }
+            set {
+                this["ChangesFileEnding"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ShowCurrentCanges {
+            get {
+                return ((bool)(this["ShowCurrentCanges"]));
+            }
+            set {
+                this["ShowCurrentCanges"] = value;
             }
         }
     }
