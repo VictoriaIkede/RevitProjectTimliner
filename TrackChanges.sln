@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28307.1259
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackChanges", "TrackChanges\TrackChanges.csproj", "{71D7AA3C-646B-490F-A349-F877070F16CD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrackChanges", "TrackChanges.csproj", "{71D7AA3C-646B-490F-A349-F877070F16CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,6 +20,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {9D0C9FD4-D5D9-48EF-8A51-4A180473B5B8}
+		SolutionGuid = {895D0589-591E-4C78-B4AA-3CC7FE96A036}
 	EndGlobalSection
 EndGlobal
