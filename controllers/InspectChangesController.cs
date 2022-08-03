@@ -22,6 +22,10 @@ namespace TrackChanges.Controllers
         private RDB.Document _doc { get; set; }
         public Hashtable _changes { get; set; }
         public System.Windows.Forms.ListView listview {get; set;}
+        public string lastChange { get; set; }
+        public string lastChangeUser { get; set; }
+        public string firstChange { get; set; }
+        public string firstChangeUser { get; set; }
         public InspectChangesController(RUI.UIApplication uiapp, Hashtable changes )
         {
             _uiapp = uiapp;
@@ -54,6 +58,10 @@ namespace TrackChanges.Controllers
             }
             //show data in a table
             changes.Sort((x, y) => Convert.ToDateTime(y.changeTimestamp).CompareTo(Convert.ToDateTime(x.changeTimestamp)));
+            lastChange = changes[0].changeTimestamp;
+            lastChangeUser = changes[0].user;
+            firstChange = changes[changes.Count-1].changeTimestamp;
+            lastChangeUser = changes[changes.Count - 1].user;
             foreach (RecordCommandsEdited.ElementData data in changes)
             {
                 System.Windows.Forms.ListViewItem entry = new System.Windows.Forms.ListViewItem(data.changeTimestamp);
@@ -68,6 +76,14 @@ namespace TrackChanges.Controllers
                 entry.Tag = data;
                 listview.Items.Add(entry);
             }
+        }
+        public void EndDocSession()
+        {
+            RecordCommandsEdited app = RecordCommandsEdited.thisApp;
+            string filename = _doc.PathName;
+            string filenameShort = Path.GetFileNameWithoutExtension(filename);
+            string user = _doc.Application.Username;
+            app.EndSessionDoc(filenameShort, "sessionEndedByUser: " + user);
         }
         
         public string exportPath { get; set; }

@@ -14,6 +14,7 @@ using Autodesk.Revit.UI;
 using TrackChanges;
 using Autodesk.Revit.UI.Selection;
 using System.Reflection;
+using System.Windows.Media.Imaging;
 #endregion
 
 namespace TrackChanges
@@ -26,7 +27,8 @@ namespace TrackChanges
             public System.Collections.Hashtable newValues { get; set; }
             public System.Collections.Hashtable oldValues { get; set; }
             public string fileName { get; set; }
-            public string exportpath { get; set; }
+            public string firstChange { get; set; }
+            public string lastChange { get; set; }
 
         }
         public struct ElementData
@@ -42,31 +44,26 @@ namespace TrackChanges
             public string sessionId { get; set; }
         }
 
-        public documentSession currentSesion { get; set; }
+        public documentSession currentSesion;
 
-        public static List<documentSession> TrackedDocuments;
+        public List<documentSession> TrackedDocuments;
+
         public Result OnShutdown(UIControlledApplication application)
         {
             application.ControlledApplication.DocumentChanged -= ChangeTracker;
             //save the Hastable data to a csv file at export location if we didnt save it alredy manualy
-            foreach (var item in TrackedDocuments)
-            {
-                string filesDirectory = Properties.Settings1.Default.ExportLoaction;
-                if (filesDirectory == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
-                var outputFileName = Path.Combine(filesDirectory, item.fileName);
-                saveHastableData(item.newValues, outputFileName);
-            }
 
-            string filesDir = Properties.Settings1.Default.ExportLoaction;
-            if (filesDir == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
-            var fileName = "Sessions_log.csv";
-            var outputFile = Path.Combine(filesDir, fileName);
-            using (StreamWriter sw = new StreamWriter(outputFile, true))
+            string filesDirectory = Properties.Settings1.Default.ExportLoaction;
+            if (filesDirectory == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
+
+            foreach (documentSession item in TrackedDocuments)
             {
-                DateTime now = DateTime.Now;
-                sw.WriteLine("Revvit closed at ;" + now + ";" + Properties.Settings1.Default.SessionID);
+                var outputFileName = Path.Combine(filesDirectory, item.fileName + ".csv");
+                saveHastableData(item.newValues, outputFileName, item.firstChange, item.lastChange, "on shutdown");
             }
-            Properties.Settings1.Default.SessionID += 1; //update sesion number
+            TrackedDocuments.Clear();
+
+            LogEndOfSession();
 
             return Result.Succeeded;
         }
@@ -80,32 +77,26 @@ namespace TrackChanges
 
                 String tabName = "Timliner";
                 application.CreateRibbonTab(tabName);
-                RibbonPanel curlPanel = application.CreateRibbonPanel(tabName, "Tools");
+                RibbonPanel curlPanel = application.CreateRibbonPanel(tabName, "Timliner");
                 //locating the dll directory
                 string curlAssembly = System.Reflection.Assembly.GetExecutingAssembly().Location;
                 string curlAssemblyPath = System.IO.Path.GetDirectoryName(curlAssembly);
                 //set the button to preform changeSetingsCommand
                 PushButtonData buttonData1 = new PushButtonData("Settings", "Settings", curlAssembly, "TrackChanges.ChangeSetingsCommand");
-                //buttonData1.LargeImage = new BitmapImage(new Uri(System.IO.Path.Combine(curlAssemblyPath, "settings.jpg")));
+                buttonData1.LargeImage = new BitmapImage(new Uri(System.IO.Path.Combine(curlAssemblyPath, "resources\\gear-icon.png")));
                 PushButton button1 = (PushButton)curlPanel.AddItem(buttonData1);
+
+                PushButtonData buttonData2 = new PushButtonData("Changes", "Changes", curlAssembly, "TrackChanges.SeeChangesCommand");
+                buttonData2.LargeImage = new BitmapImage(new Uri(System.IO.Path.Combine(curlAssemblyPath, "resources\\table-icon-21.png")));
+                PushButton button2 = (PushButton)curlPanel.AddItem(buttonData2);
 
 
                 //set event handler
                 TrackedDocuments = new List<documentSession>(); //create a empty list of all document sessions
                 application.ControlledApplication.DocumentChanged += new EventHandler<DocumentChangedEventArgs>(ChangeTracker);
 
-
-                
                 //create session log when starting app
-                string filesDir = Properties.Settings1.Default.ExportLoaction;
-                if (filesDir == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
-                var fileName = "Sessions_log.csv";
-                var outputFile = Path.Combine(filesDir, fileName);
-                using (StreamWriter sw = new StreamWriter(outputFile, true))
-                {
-                    DateTime now = DateTime.Now;
-                    sw.WriteLine("Revvit opend at ;" + now + ";" + Properties.Settings1.Default.SessionID);
-                }
+                LogStartOfSession();
 
             }
             catch (Exception)
@@ -128,6 +119,7 @@ namespace TrackChanges
             string filenameShort = Path.GetFileNameWithoutExtension(filename);
             var outputFile = Path.Combine(filesDir, filenameShort + Properties.Settings1.Default.ChangesFileEnding + ".csv");
             View currentView = uidoc.ActiveView;
+            DateTime now = DateTime.Now;
 
             bool tracking = false;
             foreach (var item in TrackedDocuments)
@@ -139,6 +131,7 @@ namespace TrackChanges
                 newSession.fileName = filenameShort;
                 newSession.newValues = new System.Collections.Hashtable();
                 newSession.oldValues = new System.Collections.Hashtable();
+                newSession.firstChange = ""+now;
                 //fill up oldValues grab all elements
                 FilteredElementCollector coll = new FilteredElementCollector(doc);
                 coll.WherePasses(new LogicalOrFilter(new ElementIsElementTypeFilter(false),new ElementIsElementTypeFilter(true)));
@@ -158,17 +151,31 @@ namespace TrackChanges
             //ICollection<ElementId> selected = sel.GetElementIds();
             //int counter = deleted.Count + changed.Count + added.Count;
 
-            DateTime now = DateTime.Now;
+            
             if (deleted.Count != 0)
             {
                 foreach (ElementId id in deleted)
                 {
-                    if (currentSesion.oldValues.ContainsKey(id)) //
+                    if (currentSesion.oldValues.ContainsKey(id)) //get old data that was deleted and update timestamp user session
                     {
-                        currentSesion.newValues.Add(id, currentSesion.oldValues[id]);
+                        ElementData oldData = (ElementData)(currentSesion.oldValues[id]);
+                        oldData.changeType = "Deleted";
+                        oldData.changeTimestamp = "" + now;
+                        oldData.user = user;
+                        oldData.sessionId = ""+Properties.Settings1.Default.SessionID;
+                        currentSesion.newValues.Add(id, oldData);
                     }
-                    else if (currentSesion.newValues.ContainsKey(id)) { //element wasn't present in the start and was added and removed (nothing changed we dont report the changes)
-                        currentSesion.newValues.Remove(id);
+                    else if (currentSesion.newValues.ContainsKey(id)) {
+                        ElementData oldData = (ElementData)(currentSesion.newValues[id]);
+                        if (oldData.changeType == "Modified") //element was first modified then deleted
+                        {
+                            oldData.changeType = "Deleted";
+                            oldData.changeTimestamp = "" + now;
+                            oldData.user = user;
+                            oldData.sessionId = "" + Properties.Settings1.Default.SessionID;
+                        }
+                        else { currentSesion.newValues.Remove(id); }  //element wasn't present in the start was added and then removed (nothing changed we dont report the changes)
+
                     }
                     else //coudnt find element in new or old hash table: something was deleted not shure what it was but it had an ID
                     {
@@ -177,6 +184,7 @@ namespace TrackChanges
                         deletedElement.uniqueId = "deleted"; deletedElement.changeType = "Deleted"; deletedElement.id = "" + id; deletedElement.user = user;
                         deletedElement.sessionId = "" + Properties.Settings1.Default.SessionID; deletedElement.changeTimestamp = "" + now;
                         currentSesion.newValues.Add(id, deletedElement);
+
                     }
                 }
             }
@@ -186,6 +194,7 @@ namespace TrackChanges
                 {
                     Element element = doc.GetElement(id);
                     currentSesion.newValues.Add(id, itemData(element, "Added", user, Properties.Settings1.Default.SessionID));
+                    //TODO handel edge cases
                 }
             }
             if (changed.Count != 0)
@@ -202,6 +211,7 @@ namespace TrackChanges
 
                 }
             }
+            currentSesion.lastChange = "" + now;
 
         }
         private ElementData itemData(Element element,string changeType,string user,int sessionID)
@@ -255,9 +265,12 @@ namespace TrackChanges
                 form.Controller = controller;
                 form.ShowDialog();
             }
+            else {
+                TaskDialog.Show("Changes", "No changes to show");
+            }
         }
 
-        public void saveHastableData(System.Collections.Hashtable hashtable, string outputFile)
+        public void saveHastableData(System.Collections.Hashtable hashtable, string outputFile,string firstChange="",string lastChange="",string firstUser="",string lastUser="")
         {
             using (StreamWriter sw = new StreamWriter(outputFile, true))
             {
@@ -273,7 +286,51 @@ namespace TrackChanges
                         data.changeTimestamp+";"+data.id+";"+data.changeType+";"+data.user+";"+
                         data.type+";"+ data.name +";"+data.CategoryType+";" + data.uniqueId + ";" + data.sessionId);
                 }
+                sw.WriteLine("First change on;" + firstChange + ";" + firstUser + ";" + Properties.Settings1.Default.SessionID + ";Last change on;" + lastChange + ";" + lastUser + ";" + Properties.Settings1.Default.SessionID); //comment out if trying to avoid brakes
                 sw.Close();
+            }
+        }
+        public void LogEndOfSession() {
+            string filesDir = Properties.Settings1.Default.ExportLoaction;
+            if (filesDir == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
+            var fileName = "Sessions_log.csv";
+            var outputFile = Path.Combine(filesDir, fileName);
+            using (StreamWriter sw = new StreamWriter(outputFile, true))
+            {
+                DateTime now = DateTime.Now;
+                sw.WriteLine("stoped;" + now + ";" + Properties.Settings1.Default.SessionID);
+                sw.Close();
+            }
+            Properties.Settings1.Default.SessionID += 1; //update sesion number
+            
+        }
+        public void LogStartOfSession()
+        {
+            string filesDir = Properties.Settings1.Default.ExportLoaction;
+            if (filesDir == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
+            var fileName = "Sessions_log.csv";
+            var outputFile = Path.Combine(filesDir, fileName);
+            using (StreamWriter sw = new StreamWriter(outputFile, true))
+            {
+                DateTime now = DateTime.Now;
+                sw.WriteLine("started;" + now + ";" + Properties.Settings1.Default.SessionID);
+                sw.Close();
+            }
+        }
+
+        public void EndSessionDoc(string filenameShort, string comment = "") {
+            string filesDirectory = Properties.Settings1.Default.ExportLoaction;
+            if (filesDirectory == "") { Properties.Settings1.Default.ExportLoaction = Path.GetTempPath(); }
+            
+            foreach (documentSession item in TrackedDocuments)
+            {
+                if(filenameShort == item.fileName)
+                {
+                    var outputFileName = Path.Combine(filesDirectory, item.fileName + ".csv");
+                    saveHastableData(item.newValues, outputFileName, item.firstChange, item.lastChange, comment);
+                    TrackedDocuments.Remove(item);
+                    Properties.Settings1.Default.SessionID += 1;
+                }
             }
         }
     }

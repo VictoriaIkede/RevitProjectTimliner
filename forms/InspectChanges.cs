@@ -43,7 +43,13 @@ namespace TrackChanges
             saveFileDialog1.Title = "Save data to csv file";
             saveFileDialog1.ShowDialog();
             RecordCommandsEdited app = RecordCommandsEdited.thisApp;
-            app.saveHastableData(Controller._changes, saveFileDialog1.FileName);
+            app.saveHastableData(Controller._changes, saveFileDialog1.FileName,Controller.firstChange, Controller.lastChange, Controller.firstChangeUser, Controller.lastChangeUser);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            Controller.EndDocSession();
+            this.Close();
         }
     }
 }
