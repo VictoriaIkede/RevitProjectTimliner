@@ -66,7 +66,7 @@ namespace TrackChanges.Controllers
             {
                 System.Windows.Forms.ListViewItem entry = new System.Windows.Forms.ListViewItem(data.changeTimestamp);
                 entry.SubItems.Add(data.id);
-                entry.SubItems.Add(data.changeType);
+                entry.SubItems.Add(data.action);
                 entry.SubItems.Add(data.user);
                 entry.SubItems.Add(data.type);
                 entry.SubItems.Add(data.name);

@@ -38,7 +38,7 @@ namespace TrackChanges
             public string user { get; set; }
             public string CategoryType { get; set; }
             public string type { get; set; }
-            public string changeType { get; set; }
+            public string action { get; set; }
             public string changeTimestamp { get; set; }
             public string uniqueId { get; set; }
             public string sessionId { get; set; }
@@ -159,20 +159,23 @@ namespace TrackChanges
                     if (currentSesion.oldValues.ContainsKey(id)) //get old data that was deleted and update timestamp user session
                     {
                         ElementData oldData = (ElementData)(currentSesion.oldValues[id]);
-                        oldData.changeType = "Deleted";
+                        oldData.action = "Deleted";
                         oldData.changeTimestamp = "" + now;
                         oldData.user = user;
                         oldData.sessionId = ""+Properties.Settings1.Default.SessionID;
-                        currentSesion.newValues.Add(id, oldData);
+                        currentSesion.newValues.Add(id, oldData); //insert updated old into new
                     }
                     else if (currentSesion.newValues.ContainsKey(id)) {
-                        ElementData oldData = (ElementData)(currentSesion.newValues[id]);
-                        if (oldData.changeType == "Modified") //element was first modified then deleted
+                        ElementData dataNew = (ElementData)(currentSesion.newValues[id]);
+                        if (dataNew.action == "Modified") //element was first modified then deleted
                         {
-                            oldData.changeType = "Deleted";
+                            currentSesion.newValues.Remove(id); //remove modified and add deleted
+                            ElementData oldData = (ElementData)(currentSesion.oldValues[id]);
+                            oldData.action = "Deleted";
                             oldData.changeTimestamp = "" + now;
                             oldData.user = user;
                             oldData.sessionId = "" + Properties.Settings1.Default.SessionID;
+                            currentSesion.newValues.Add(id, oldData);
                         }
                         else { currentSesion.newValues.Remove(id); }  //element wasn't present in the start was added and then removed (nothing changed we dont report the changes)
 
@@ -181,7 +184,7 @@ namespace TrackChanges
                     {
                         ElementData deletedElement = new ElementData();
                         deletedElement.type = "deleted"; deletedElement.name = "deleted"; deletedElement.CategoryType = "deleted";
-                        deletedElement.uniqueId = "deleted"; deletedElement.changeType = "Deleted"; deletedElement.id = "" + id; deletedElement.user = user;
+                        deletedElement.uniqueId = "deleted"; deletedElement.action = "Deleted"; deletedElement.id = "" + id; deletedElement.user = user;
                         deletedElement.sessionId = "" + Properties.Settings1.Default.SessionID; deletedElement.changeTimestamp = "" + now;
                         currentSesion.newValues.Add(id, deletedElement);
 
@@ -204,7 +207,7 @@ namespace TrackChanges
                     Element element = doc.GetElement(id);
                     if (currentSesion.newValues.ContainsKey(id)) { //modify existing entry
                         ElementData oldData = (ElementData)(currentSesion.newValues[id]);
-                        if (oldData.changeType == "Added") currentSesion.newValues[id] = itemData(element, "Added", user, Properties.Settings1.Default.SessionID); //if we modified new element still track it as added
+                        if (oldData.action == "Added") currentSesion.newValues[id] = itemData(element, "Added", user, Properties.Settings1.Default.SessionID); //if we modified new element still track it as added
                         else currentSesion.newValues[id] = itemData(element, "Modified", user, Properties.Settings1.Default.SessionID);
                     }
                     currentSesion.newValues.Add(id, itemData(element, "Modified", user, Properties.Settings1.Default.SessionID));
@@ -220,7 +223,7 @@ namespace TrackChanges
             data.id = ("" + element.Id);
             data.user = user;
             data.sessionId = ("" + sessionID);
-            data.changeType = changeType;
+            data.action = changeType;
             DateTime now = DateTime.Now;
             data.changeTimestamp = ("" + now);
 
@@ -283,7 +286,7 @@ namespace TrackChanges
                 {
                     ElementData data = (ElementData)(hashtable[key]);
                     sw.WriteLine(
-                        data.changeTimestamp+";"+data.id+";"+data.changeType+";"+data.user+";"+
+                        data.changeTimestamp+";"+data.id+";"+data.action+";"+data.user+";"+
                         data.type+";"+ data.name +";"+data.CategoryType+";" + data.uniqueId + ";" + data.sessionId);
                 }
                 sw.WriteLine("First change on;" + firstChange + ";" + firstUser + ";" + Properties.Settings1.Default.SessionID + ";Last change on;" + lastChange + ";" + lastUser + ";" + Properties.Settings1.Default.SessionID); //comment out if trying to avoid brakes
