@@ -13,15 +13,11 @@ namespace TrackChanges
     internal partial class InspectChanges : Form
     {
         public Controllers.InspectChangesController Controller { get; set; }
+        public int selectedObjectID = -1;
 
         public InspectChanges()
         {
             InitializeComponent();
-        }
-
-        private void listView1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
         }
 
         private void InspectChanges_Shown(object sender, EventArgs e)
@@ -35,7 +31,7 @@ namespace TrackChanges
             this.Close();
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void buttonSaveToCSV_Click(object sender, EventArgs e)
         {
             //save data to csv file
             saveFileDialog1 = new SaveFileDialog();
@@ -46,10 +42,26 @@ namespace TrackChanges
             app.saveHastableData(Controller._changes, saveFileDialog1.FileName,Controller.firstChange, Controller.lastChange, Controller.firstChangeUser, Controller.lastChangeUser);
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private void buttonEndSession_Click(object sender, EventArgs e)
         {
             Controller.EndDocSession();
             this.Close();
+        }
+
+        private void buttonFocusElement_Click(object sender, EventArgs e)
+        {
+            //focus change and close the form
+            if (listView1.SelectedItems.Count > 0) {
+                ListView.SelectedListViewItemCollection selectedItems = listView1.SelectedItems;
+                List<int> indexes = new List<int>();
+                foreach (ListViewItem element in selectedItems)
+                {
+                    if (indexes.Contains(element.Index) == false) indexes.Add(element.Index);
+                }
+                
+                Controller.FocusElement(indexes);
+                this.Close();
+            }
         }
     }
 }

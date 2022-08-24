@@ -26,6 +26,9 @@ namespace TrackChanges.Controllers
         public string lastChangeUser { get; set; }
         public string firstChange { get; set; }
         public string firstChangeUser { get; set; }
+
+        List<RecordCommandsEdited.ElementData> ChangesList { get; set; }
+
         public InspectChangesController(RUI.UIApplication uiapp, Hashtable changes )
         {
             _uiapp = uiapp;
@@ -58,6 +61,7 @@ namespace TrackChanges.Controllers
             }
             //show data in a table
             changes.Sort((x, y) => Convert.ToDateTime(y.changeTimestamp).CompareTo(Convert.ToDateTime(x.changeTimestamp)));
+            ChangesList = changes;
             lastChange = changes[0].changeTimestamp;
             lastChangeUser = changes[0].user;
             firstChange = changes[changes.Count-1].changeTimestamp;
@@ -76,6 +80,23 @@ namespace TrackChanges.Controllers
                 entry.Tag = data;
                 listview.Items.Add(entry);
             }
+        }
+        public void FocusElement(List<int> indexes) {
+            List<RDB.ElementId> listOFids = new List<RDB.ElementId>();
+            foreach (int index in indexes)
+            {
+                RecordCommandsEdited.ElementData element = ChangesList[index];
+                int id = Convert.ToInt32(element.id);
+                listOFids.Add(new RDB.ElementId(id));
+            }
+            
+            //RDB.View view = _uiapp.ActiveUIDocument.Document.ActiveView;
+            //view.IsolateElementsTemporary(liIds);
+            _uiapp.ActiveUIDocument.Selection.SetElementIds(listOFids);
+            _uiapp.ActiveUIDocument.ShowElements(listOFids);
+            _uiapp.ActiveUIDocument.RefreshActiveView();
+
+
         }
         public void EndDocSession()
         {
